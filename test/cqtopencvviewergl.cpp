@@ -1,11 +1,12 @@
 #include "cqtopencvviewergl.h"
 #include "cqtopencvviewergl.moc"
+#include <QTimer>
 
 CQtOpenCVViewerGl::CQtOpenCVViewerGl(QWidget *parent) :
     QGLWidget(parent)
 {
     mSceneChanged = false;
-    mBgColor = QColor::fromRgb(150, 150, 150);
+    mBgColor = QColor::fromRgb(0, 0, 150);
 
     mOutH = 0;
     mOutW = 0;
@@ -13,6 +14,8 @@ CQtOpenCVViewerGl::CQtOpenCVViewerGl(QWidget *parent) :
 
     mPosX = 0;
     mPosY = 0;
+    redraw_finished = true;
+    worker = new CQtOpenCVViewerGlWorker(this);
 }
 
 void CQtOpenCVViewerGl::initializeGL()
@@ -79,6 +82,49 @@ void CQtOpenCVViewerGl::paintGL()
 
     mSceneChanged = false;
 }
+CQtOpenCVViewerGlWorker::CQtOpenCVViewerGlWorker(QWidget *parent)
+{
+  this->parent = parent;
+  this->start(LowPriority);
+}
+
+void CQtOpenCVViewerGlWorker::run()
+{
+  QTimer drawer;
+  drawer.setInterval(66); //~15fps
+  connect(&drawer, SIGNAL(timeout()), this->parent, SLOT(redraw()));
+
+  drawer.start();
+  QThread::run();
+}
+
+void CQtOpenCVViewerGl::redraw(void )
+{
+    if(redraw_finished)
+    {
+      redraw_finished = false;
+      mImgRatio = (float)mOrigImage.cols/(float)mOrigImage.rows;
+
+      if( mOrigImage.channels() == 3)
+	  mRenderQtImg = QImage((const unsigned char*)(mOrigImage.data),
+				mOrigImage.cols, mOrigImage.rows,
+				mOrigImage.step, QImage::Format_RGB888);
+      else if( mOrigImage.channels() == 1)
+	  mRenderQtImg = QImage((const unsigned char*)(mOrigImage.data),
+				mOrigImage.cols, mOrigImage.rows,
+				mOrigImage.step, QImage::Format_Indexed8);
+      else
+	  return;
+
+      mRenderQtImg = QGLWidget::convertToGLFormat(mRenderQtImg);
+
+      mSceneChanged = true;
+
+      updateScene();
+      redraw_finished = true;
+  }
+}
+
 
 void CQtOpenCVViewerGl::renderImage()
 {
@@ -98,19 +144,19 @@ void CQtOpenCVViewerGl::renderImage()
             int imH = mRenderQtImg.height();
 
             // The image is to be resized to fit the widget?
-//             if( imW != this->size().width() &&
-//                     imH != this->size().height() )
-//             {
-// 
-//                 image = mRenderQtImg.scaled( //this->size(),
-//                                              QSize(mOutW,mOutH),
-//                                              Qt::IgnoreAspectRatio,
-//                                              Qt::SmoothTransformation
-//                                              );
-// 
-//                 //qDebug( QString( "Image size: (%1x%2)").arg(imW).arg(imH).toAscii() );
-//             }
-//             else
+            if( imW != this->size().width() &&
+                    imH != this->size().height() )
+            {
+
+                image = mRenderQtImg.scaled( //this->size(),
+                                             QSize(mOutW,mOutH),
+                                             Qt::IgnoreAspectRatio,
+                                             Qt::SmoothTransformation
+                                             );
+
+                //qDebug( QString( "Image size: (%1x%2)").arg(imW).arg(imH).toAscii() );
+            }
+            else
                 image = mRenderQtImg;
 
             // ---> Centering image in draw area            
@@ -134,25 +180,5 @@ void CQtOpenCVViewerGl::renderImage()
 bool CQtOpenCVViewerGl::showImage( cv::Mat image )
 {
     image.copyTo(mOrigImage);
-
-    mImgRatio = (float)image.cols/(float)image.rows;
-
-    if( mOrigImage.channels() == 3)
-        mRenderQtImg = QImage((const unsigned char*)(mOrigImage.data),
-                              mOrigImage.cols, mOrigImage.rows,
-                              mOrigImage.step, QImage::Format_RGB888);
-    else if( mOrigImage.channels() == 1)
-        mRenderQtImg = QImage((const unsigned char*)(mOrigImage.data),
-                              mOrigImage.cols, mOrigImage.rows,
-                              mOrigImage.step, QImage::Format_Indexed8);
-    else
-        return false;
-
-    mRenderQtImg = QGLWidget::convertToGLFormat(mRenderQtImg);
-
-    mSceneChanged = true;
-
-    updateScene();
-
     return true;
 }
