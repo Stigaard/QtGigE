@@ -19,6 +19,8 @@ private:
   CQtOpenCVViewerGl view;
   demosaic_cv dem;
   itimerval ptimer;
+private slots:
+  void measured_cam_fps(float fps);
 };
 
 #endif // cam_interface_test_H

@@ -8,8 +8,10 @@
 #include <QMutex>
 #include <QQueue>
 #include <QSemaphore>
+#include <QElapsedTimer>
 
 #include <time.h>
+#include <sys/time.h>
 #include <QThread>
 #include <opencv2/opencv.hpp>
   class BASLER_ACA2000 : public QThread {
@@ -25,15 +27,23 @@
     int startAquisition(void);
     int stopAquisition(void);
     void unpack12BitPacked(const ArvBuffer* img, char* unpacked16);
+    void setptimer(itimerval timer);
   signals:
     void newBayerBGImage(const cv::Mat img);
     void newBayerGRImage(const cv::Mat img);
+    void measuredFPS(float fps);
   private:
       void run();
       ArvCamera * camera;
       ArvStream* stream;
       QQueue<ArvBuffer*> bufferQue;
       QSemaphore bufferSem;
+      itimerval ptimer;
+      bool updateptimer;
+      bool abort;
+      static const int frameAvg = 20;
+      QElapsedTimer framePeriod;
+      int nFrames;
   };
 
 #endif  // CAMERA_BASLER_ACA2000_50GC_
