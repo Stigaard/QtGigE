@@ -1,7 +1,7 @@
 project(cam_interface_test)
 cmake_minimum_required(VERSION 2.6)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
-set(PROFILE 0) #If enabling profiling
+set(PROFILE 1) #If enabling profiling
 set(ASMOUT 0) #If enabling assembly output for debugging
 
 
@@ -12,6 +12,7 @@ find_package(RT REQUIRED)
 find_package(GLIB2 REQUIRED)
 find_package(GOBJECT REQUIRED)
 find_package(PkgConfig REQUIRED)
+find_package(X11)
 
 pkg_check_modules(ARAVIS aravis-0.2)
 find_library(ARAVIS_LIBS ${ARAVIS_LIBRARIES} ${ARAVIS_LIBRARY_DIRS})
@@ -39,9 +40,10 @@ include_directories(${QT_INCLUDES}
 		    ${OPENCV_INCLUDE_DIR}
 		    ${QT_QTOPENGL_INCLUDE_DIR}
 		    ${ARAVIS_INCLUDE_DIRS}
+		    ${X11_INCLUDE_DIRS}
 		    )
 
-set(cam_interface_test_SRCS cam_interface_test.cpp main.cpp ../basler_acA2000-50gc.cc cqtopencvviewergl.cpp)
+set(cam_interface_test_SRCS demosaic_cv.cpp cam_interface_test.cpp main.cpp ../basler_acA2000-50gc.cc cqtopencvviewergl.cpp)
 qt4_automoc(${cam_interface_test_SRCS})
 add_definitions(${QT_DEFINITIONS})
 add_executable(cam_interface_test ${cam_interface_test_SRCS})
@@ -59,4 +61,5 @@ target_link_libraries(cam_interface_test
 		      ${ARAVIS_LIBS}
 		      ${GLIB2_LIBRARIES}
 		      ${GOBJECT_LIBRARIES}
+		      ${X11_LIBRARIES}
 		      )
