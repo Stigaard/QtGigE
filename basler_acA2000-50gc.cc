@@ -138,6 +138,8 @@ void BASLER_ACA2000::run()
   std::cout << "Basler_AVA2000 TID:" << syscall(SYS_gettid) << std::endl << std::flush;
   char * tmp = (char*)malloc(1000*2000*5);
   nFrames = 0;  
+  successFrames = 0;
+  failedFrames = 0;
   framePeriod.start();
   while(abort==false)
   {
@@ -148,6 +150,7 @@ void BASLER_ACA2000::run()
       fps /= frameAvg;
       fps = 1000.0f/fps;
       emit(measuredFPS(fps));
+      emit(measuredFrameStats(successFrames, failedFrames));
       framePeriod.restart();
     }
     else
@@ -169,6 +172,7 @@ void BASLER_ACA2000::run()
     ArvBuffer * buffer = this->bufferQue.dequeue();
     if(buffer->status==ARV_BUFFER_STATUS_SUCCESS)
     {
+      successFrames++;
  //     std::cout << "Buffer status SUCCESS" << std::endl;
       //See aravis-0.2.0/docs/reference/aravis/html/ArvBuffer.html
       switch (buffer->pixel_format)
@@ -262,6 +266,7 @@ void BASLER_ACA2000::run()
     }
     else
     {
+      failedFrames++;
 //       switch (buffer->status)
 //       {
 // 	case 	ARV_BUFFER_STATUS_SUCCESS:

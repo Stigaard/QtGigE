@@ -32,6 +32,7 @@
     void newBayerBGImage(const cv::Mat img);
     void newBayerGRImage(const cv::Mat img);
     void measuredFPS(float fps);
+    void measuredFrameStats(int success, int failed);
   private:
       void run();
       ArvCamera * camera;
@@ -44,6 +45,8 @@
       static const int frameAvg = 20;
       QElapsedTimer framePeriod;
       int nFrames;
+      int successFrames;
+      int failedFrames;
   };
 
 #endif  // CAMERA_BASLER_ACA2000_50GC_
