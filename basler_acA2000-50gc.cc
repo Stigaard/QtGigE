@@ -60,25 +60,18 @@ int BASLER_ACA2000::setGain(float gain)
 
 void BASLER_ACA2000::unpack12BitPacked(const ArvBuffer* img, char* unpacked16)
 {
-  char * img_ = (char*)(img->data);
-  int width = img->width;
-  int height = img->height;
-  int i, j, jj;
-//  cv::Mat GrayImage(height,width, cv::DataType<uint16_t>::type);
-//  if(!GrayImage.isContinuous())
-//    std::cout << "Image is not continuos" << std::endl;
- uint16_t * grayImgPtr = (uint16_t*)unpacked16;
-  for(i = 0; i < height; i++)
+  unsigned char * img_ = (unsigned char*)(img->data);
+  unsigned char * end = (unsigned char*)img->data + (img->width*img->height*3)/2;
+  unsigned char b0,b1,b2;
+  uint16_t *out = (uint16_t *)unpacked16;
+  while(img_!=end)
   {
-      for(j = 0; j < width; j+=4)
-      {
-	  grayImgPtr[(i*width+j)+0] = (((uint16_t)(img_[((((i*width)+j)*6)/4)+1]) && 0b11110000)<<4 | ((uint16_t)(img_[((((i*width)+j)*6)/4)+0])<<8));
-	  grayImgPtr[(i*width+j)+1] = (((uint16_t)(img_[((((i*width)+j)*6)/4)+1]) && 0b00001111)<<8 | ((uint16_t)(img_[((((i*width)+j)*6)/4)+2])<<8));
-	  grayImgPtr[(i*width+j)+2] = ((uint16_t)(img_[((((i*width)+j)*6)/4)+4]) && 0b11110000)<<4 | ((uint16_t)(img_[((((i*width)+j)*6)/4)+3])<<8);
-	  grayImgPtr[(i*width+j)+3] = ((uint16_t)(img_[((((i*width)+j)*6)/4)+4]) && 0b00001111)<<8 | ((uint16_t)(img_[((((i*width)+j)*6)/4)+5])<<8);
-      }
+    b0 = *img_++;
+    b1 = *img_++;
+    b2 = *img_++;
+    *out++ = ((b1 && 0x0f)<<4) + (b0<<8);
+    *out++ = (b1 && 0xf0) + (b2<<8);
   }
-//    GrayImage.copyTo(unpacked16);
 }
 
 void BASLER_ACA2000::newImageCallbackWrapper(void* user_data, ArvStreamCallbackType type, ArvBuffer* buffer)
