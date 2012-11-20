@@ -18,6 +18,7 @@
 
 
 #include "demosaic_cv.h"
+#include "../basler_acA2000-50gc.h"
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
@@ -65,8 +66,9 @@ void demosaic_cv::run()
     }
     cv::Mat img = Imgs.dequeue();
     cv::Mat rgb;
-    cv::Mat BayerGR8(img.rows,img.cols, cv::DataType<uint8_t>::type);
-    img.convertTo(BayerGR8, BayerGR8.type(), 1.0/256.0);
+    cv::Mat BayerGR8;
+    //img.convertTo(BayerGR8, BayerGR8.type(), 1.0/256.0);
+    BASLER_ACA2000::convert16to8bit(img, BayerGR8);
     cv::cvtColor(BayerGR8, rgb, CV_BayerGR2BGR);
     emit(newImage(rgb));    
   }

@@ -74,6 +74,19 @@ void BASLER_ACA2000::unpack12BitPacked(const ArvBuffer* img, char* unpacked16)
   }
 }
 
+void BASLER_ACA2000::convert16to8bit(cv::InputArray in, cv::OutputArray out)
+{
+  uint16_t * in_ = (uint16_t*)in.getMat().ptr();
+  cv::Mat tmp_out(in.getMat().size().height, in.getMat().size().width, cv::DataType<uint8_t>::type);
+  uint8_t * out_ = tmp_out.ptr();
+  uint16_t * end = in_ + (in.getMat().size().height * in.getMat().size().width);
+  while(in_!=end)
+  {
+    *out_++ = (*in_++)>>8;
+  }
+  tmp_out.copyTo(out);
+}
+
 void BASLER_ACA2000::newImageCallbackWrapper(void* user_data, ArvStreamCallbackType type, ArvBuffer* buffer)
 {
   //Please note that this is in fact a static method, where we pass the instance as a user_data parameter,

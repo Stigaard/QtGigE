@@ -28,6 +28,7 @@
     int stopAquisition(void);
     void unpack12BitPacked(const ArvBuffer* img, char* unpacked16);
     void setptimer(itimerval timer);
+    static void convert16to8bit(cv::InputArray in, cv::OutputArray out);
   signals:
     void newBayerBGImage(const cv::Mat img);
     void newBayerGRImage(const cv::Mat img);
