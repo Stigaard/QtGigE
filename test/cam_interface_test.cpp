@@ -21,8 +21,8 @@ cam_interface_test::cam_interface_test()
     cam->setptimer(ptimer);
     
     //this->cam->setROI(0,0,1000,1000);
-    //connect(this->cam, SIGNAL(newBayerGRImage(cv::Mat)), &dem, SLOT(newBayerGRImage(cv::Mat)), Qt::QueuedConnection);
-    //connect(&dem, SIGNAL(newImage(cv::Mat)), &view, SLOT(showImage(cv::Mat)));
+    connect(this->cam, SIGNAL(newBayerGRImage(cv::Mat)), &dem, SLOT(newBayerGRImage(cv::Mat)), Qt::QueuedConnection);
+    connect(&dem, SIGNAL(newImage(cv::Mat)), &view, SLOT(showImage(cv::Mat)));
     connect(this->cam, SIGNAL(measuredFPS(float)), this, SLOT(measured_cam_fps(float)));
     //connect(this->cam, SIGNAL(measuredFrameStats(int,int)), this, SLOT(measured_cam_frame_stats(int,int)));
     this->cam->startAquisition();

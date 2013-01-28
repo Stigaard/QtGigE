@@ -43,7 +43,7 @@ include_directories(${QT_INCLUDES}
 		    ${X11_INCLUDE_DIRS}
 		    )
 
-set(cam_interface_test_SRCS demosaic_cv.cpp cam_interface_test.cpp main.cpp ../basler_acA2000-50gc.cc cqtopencvviewergl.cpp)
+set(cam_interface_test_SRCS demosaic_cv.cpp cam_interface_test.cpp main.cpp ../qtgige.cc cqtopencvviewergl.cpp)
 qt4_automoc(${cam_interface_test_SRCS})
 add_definitions(${QT_DEFINITIONS})
 add_executable(cam_interface_test ${cam_interface_test_SRCS})

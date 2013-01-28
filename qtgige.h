@@ -1,7 +1,7 @@
 // Copyright (c) 2011 University of Southern Denmark. All rights reserved.
 // Use of this source code is governed by the MIT license (see license.txt).
-#ifndef CAMERA_BASLER_ACA2000_50GC_
-#define CAMERA_BASLER_ACA2000_50GC_
+#ifndef QTGIGE_H
+#define QTGIGE_H
 #include <arvtypes.h>
 #include <arvstream.h>
 #include <QObject>
@@ -54,5 +54,5 @@
       void gigE_list_features(ArvGc* genicam, const char* feature, gboolean show_description, QTreeWidgetItem* parent);
   };
 
-#endif  // CAMERA_BASLER_ACA2000_50GC_
+#endif  // QTGIGE_H
 

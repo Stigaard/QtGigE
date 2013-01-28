@@ -15,8 +15,8 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
-#include "basler_acA2000-50gc.moc"
-#include "basler_acA2000-50gc.h"
+#include "qtgige.moc"
+#include "qtgige.h"
 #undef signals
   #include <arv.h>
 

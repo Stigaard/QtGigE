@@ -4,7 +4,7 @@
 #include <QtGui/QMainWindow>
 #include <opencv2/opencv.hpp>
 #include <sys/time.h>
-#include "../basler_acA2000-50gc.h"
+#include "../qtgige.h"
 #include "cqtopencvviewergl.h"
 #include "demosaic_cv.h"
 

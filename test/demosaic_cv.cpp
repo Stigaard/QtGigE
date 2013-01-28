@@ -18,7 +18,7 @@
 
 
 #include "demosaic_cv.h"
-#include "../basler_acA2000-50gc.h"
+#include "../qtgige.h"
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
