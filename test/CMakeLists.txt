@@ -1,6 +1,6 @@
 project(cam_interface_test)
 cmake_minimum_required(VERSION 2.6)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/../CMAKE_Modules/")
 set(PROFILE 1) #If enabling profiling
 set(ASMOUT 0) #If enabling assembly output for debugging
 
