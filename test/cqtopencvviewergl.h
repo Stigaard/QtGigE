@@ -24,6 +24,7 @@ private:
     cv::Mat     mOrigImage;             /// original OpenCV image to be shown
     QColor 	mBgColor;		/// Background color
     QMutex bufferMutex;
+    GLuint texName;
 };
 
 #endif // CQTOPENCVVIEWERGL_H

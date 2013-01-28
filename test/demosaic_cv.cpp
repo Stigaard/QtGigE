@@ -22,6 +22,8 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <qcache.h>
+#include <qt4/QtCore/QString>
 
 #include "demosaic_cv.moc"
 demosaic_cv::demosaic_cv(void )
@@ -48,6 +50,7 @@ void demosaic_cv::setptimer(itimerval timer)
 
 void demosaic_cv::run()
 {
+  int i =0;
   this->msleep(400);
   std::cout << "DEMOSAIC TID:" << syscall(SYS_gettid) << std::endl << std::flush;
   while(abort==false)
@@ -65,11 +68,13 @@ void demosaic_cv::run()
 	return;
     }
     cv::Mat img = Imgs.dequeue();
+    QString fname("Img_" + QString::number(i++) + ".png");
+    cv::imwrite(fname.toLocal8Bit().constData(), img);
     cv::Mat rgb;
     cv::Mat BayerGR8;
     //img.convertTo(BayerGR8, BayerGR8.type(), 1.0/256.0);
-    BASLER_ACA2000::convert16to8bit(img, BayerGR8);
-    cv::cvtColor(BayerGR8, rgb, CV_BayerGR2BGR);
+    QTGIGE::convert16to8bit(img, BayerGR8);
+    cv::cvtColor(BayerGR8, rgb, CV_BayerGB2BGR_VNG);
     emit(newImage(rgb));    
   }
 }

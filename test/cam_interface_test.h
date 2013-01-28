@@ -15,12 +15,13 @@ public:
     cam_interface_test();
     ~cam_interface_test();
 private:
-  BASLER_ACA2000 * cam;
+  QTGIGE * cam;
   CQtOpenCVViewerGl view;
   demosaic_cv dem;
   itimerval ptimer;
 private slots:
   void measured_cam_fps(float fps);
+  void measured_cam_frame_stats(int success, int failed);
 };
 
 #endif // cam_interface_test_H

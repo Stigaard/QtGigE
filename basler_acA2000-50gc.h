@@ -9,16 +9,18 @@
 #include <QQueue>
 #include <QSemaphore>
 #include <QElapsedTimer>
+#include <QTreeWidgetItem>
 
 #include <time.h>
 #include <sys/time.h>
 #include <QThread>
+#include <qvarlengtharray.h>
 #include <opencv2/opencv.hpp>
-  class BASLER_ACA2000 : public QThread {
+  class QTGIGE : public QThread {
     Q_OBJECT
     public:
-    BASLER_ACA2000(char* serial);
-    ~BASLER_ACA2000();
+    QTGIGE(char* serial);
+    ~QTGIGE();
     int setROI(int x, int y, int width, int height);
     int setExposure(float period); //Exposure time in µs
     int setGain(float gain); //Unit currently unknown (have to look it up from datasheet)
@@ -28,6 +30,7 @@
     int stopAquisition(void);
     void unpack12BitPacked(const ArvBuffer* img, char* unpacked16);
     void setptimer(itimerval timer);
+    void PrintParms(void);
     static void convert16to8bit(cv::InputArray in, cv::OutputArray out);
   signals:
     void newBayerBGImage(const cv::Mat img);
@@ -48,6 +51,7 @@
       int nFrames;
       int successFrames;
       int failedFrames;
+      void gigE_list_features(ArvGc* genicam, const char* feature, gboolean show_description, QTreeWidgetItem* parent);
   };
 
 #endif  // CAMERA_BASLER_ACA2000_50GC_
