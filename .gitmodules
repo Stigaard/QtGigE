@@ -1,0 +1,3 @@
+[submodule "aravis"]
+	path = aravis
+	url = http://git.gnome.org/browse/aravis
