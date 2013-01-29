@@ -9,6 +9,7 @@ find_library(PTHREAD_LIB pthread)
 
 pkg_check_modules(ARAVIS aravis-0.2)
 find_library(ARAVIS_LIBS ${ARAVIS_LIBRARIES} ${ARAVIS_LIBRARY_DIRS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
 
 #Semi hardcoded the aravis libpath for now, should not do this, but is just for preliminary testing
 set(ARAVIS_LIBS "${ARAVIS_LIBRARY_DIRS}/libaravis-0.2.so")
