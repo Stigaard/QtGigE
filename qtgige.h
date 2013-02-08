@@ -10,11 +10,13 @@
 #include <QSemaphore>
 #include <QElapsedTimer>
 #include <QTreeWidgetItem>
+#include <QGridLayout>
 
 #include <time.h>
 #include <sys/time.h>
 #include <QThread>
 #include <qvarlengtharray.h>
+#include <qsignalmapper.h>
 #include <opencv2/opencv.hpp>
   class QTGIGE : public QThread {
     Q_OBJECT
@@ -37,10 +39,19 @@
     void newBayerGRImage(const cv::Mat img);
     void measuredFPS(float fps);
     void measuredFrameStats(int success, int failed);
+  public slots:
+    void showCameraSettings(void);
+    void writeEnum(QString nodeName, QString value);
+    void writeFloat(QString nodeName, float value);
+    void writeInt(QString nodeName, int value);
+    void writeBool(QString nodeName, bool value);
+    void emitAction(QString nodeName);
   private:
       void run();
       ArvCamera * camera;
       ArvStream* stream;
+      ArvDevice * dev;
+      ArvGc *genicam;
       QQueue<ArvBuffer*> bufferQue;
       QSemaphore bufferSem;
       itimerval ptimer;
@@ -52,6 +63,19 @@
       int successFrames;
       int failedFrames;
       void gigE_list_features(ArvGc* genicam, const char* feature, gboolean show_description, QTreeWidgetItem* parent);
+      QDialog *settings;
+      QWidget * currentSetting;
+      QTreeWidget *treeWidget;
+      QGridLayout *settingsLayout;
+      QGridLayout * currentSettingLayout;
+      void drawSettingsDialog(void);
+  private slots:
+      void newSettingSelected(QTreeWidgetItem* item,int column);
+      void writeEnumFromSettingsSelectorMapper(QString value);
+      void writeFloatFromSettings(int value);
+      void writeIntFromSettings(int value);
+      void writeBoolFromSettings(int value);
+      void emitActionFromSettings(void);
   };
 
 #endif  // QTGIGE_H
