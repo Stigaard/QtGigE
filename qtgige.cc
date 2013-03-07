@@ -24,7 +24,8 @@
 #include "qtgige.moc"
 #include "qtgige.h"
 #undef signals
-  #include <arv.h>
+#include <arv.h>
+
 
 QTGIGE::QTGIGE(char* serial)
 {
