@@ -28,15 +28,16 @@
   #include <arv.h>
 #endif
 
-QTGIGE::QTGIGE(char* serial)
+QTGIGE::QTGIGE(char* deviceId)
 {
 #ifndef EMULATE_CAMERA
-  this->camera = arv_camera_new (NULL);
+  this->camera = arv_camera_new (deviceId);
 #endif
   updateptimer = false;
 //   std::cout << "Vendor name:" << arv_camera_get_vendor_name (camera) << std::endl;
 //   std::cout << "Model name:" << arv_camera_get_model_name (camera) << std::endl;
 //   std::cout << "Device ID:" << arv_camera_get_device_id (camera) << std::endl;
+  
   abort = false;
   this->drawSettingsDialog();
 #ifndef EMULATE_CAMERA

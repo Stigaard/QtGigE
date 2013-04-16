@@ -26,7 +26,7 @@
   class QTGIGE : public QThread {
     Q_OBJECT
     public:
-    QTGIGE(char* serial);
+    QTGIGE(char* deviceId);
     ~QTGIGE();
     int setROI(int x, int y, int width, int height);
     int setExposure(float period); //Exposure time in µs
