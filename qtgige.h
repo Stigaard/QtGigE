@@ -3,7 +3,7 @@
 #ifndef QTGIGE_H
 #define QTGIGE_H
 #ifdef EMULATE_CAMERA
-  #define EMULATION_INPUT_FILE "/media/slow-storage/Dropbox/Ph.D./2013-01-23-VisionSpray/simulation_image/maizeAnd3weedsCombinedImage.png"
+  #define EMULATION_INPUT_FILE "../../simulation_image/maizeAnd3weedsCombinedImage.png"
 #else
   #include <arvtypes.h>
   #include <arvstream.h>
