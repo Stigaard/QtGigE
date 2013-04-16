@@ -23,6 +23,7 @@
 #include <qvarlengtharray.h>
 #include <qsignalmapper.h>
 #include <opencv2/opencv.hpp>
+#include <opencv/highgui.h>
   class QTGIGE : public QThread {
     Q_OBJECT
     public:
