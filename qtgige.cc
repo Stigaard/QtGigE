@@ -23,21 +23,33 @@
 
 #include "qtgige.moc"
 #include "qtgige.h"
-#undef signals
-#include <arv.h>
-
+#ifndef EMULATE_CAMERA
+  #undef signals
+  #include <arv.h>
+#endif
 
 QTGIGE::QTGIGE(char* serial)
 {
+#ifndef EMULATE_CAMERA
   this->camera = arv_camera_new (NULL);
+#endif
   updateptimer = false;
 //   std::cout << "Vendor name:" << arv_camera_get_vendor_name (camera) << std::endl;
 //   std::cout << "Model name:" << arv_camera_get_model_name (camera) << std::endl;
 //   std::cout << "Device ID:" << arv_camera_get_device_id (camera) << std::endl;
   abort = false;
   this->drawSettingsDialog();
+#ifndef EMULATE_CAMERA
   dev = arv_camera_get_device(camera);
   genicam = arv_device_get_genicam(dev);
+#else
+  roi_width = 2046;
+  roi_height = 1086;
+  roi_x = 1587;
+  roi_y = 0;
+  roi_scale = 1.0;
+  roi_cpos = 0;
+#endif
   this->start();
 }
 
@@ -52,7 +64,9 @@ QTGIGE::~QTGIGE()
 {
   abort = true;
   this->msleep(300);
+#ifndef EMULATE_CAMERA
   g_object_unref(this->camera);
+#endif
 }
 
 void QTGIGE::showCameraSettings(void )
@@ -92,215 +106,225 @@ void QTGIGE::drawSettingsDialog(void )
 
 void QTGIGE::PrintParms(void )
 {
+#ifndef EMULATE_CAMERA
   gigE_list_features(genicam, "Root", true, treeWidget->invisibleRootItem());
+#endif
   treeWidget->expandItem(treeWidget->topLevelItem(0));
   settings->show();
 }
 
 void QTGIGE::newSettingSelected(QTreeWidgetItem* item, int column)
 {
-  QLayoutItem *child;
-  while ((child = currentSettingLayout->takeAt(0)) != 0) {
-      child->widget()->disconnect();
-      delete child->widget();
-      delete child;
-  }
-  currentSetting->update();
-  ArvGcNode *node;
-  node = arv_gc_get_node (genicam, item->text(0).toLocal8Bit().constData());
-  const char *description;
-  description = arv_gc_feature_node_get_description (ARV_GC_FEATURE_NODE (node), NULL);
-  QLabel * descriptionLabel = new QLabel(currentSetting);
-  descriptionLabel->setText(description);
-  descriptionLabel->setWordWrap(true);
-  
-  QLabel * text = new QLabel(currentSetting);
-  QLineEdit * codeSnippet = new QLineEdit(currentSetting);
-  codeSnippet->setReadOnly(true);
-  text->setText(item->text(0));
-  currentSettingLayout->addWidget(text, 1,1);
-  currentSettingLayout->addWidget(descriptionLabel, 3,1);
-  QComboBox *comboValue = new QComboBox(currentSetting);
-  QSlider * sliderValue = new QSlider(currentSetting);
-  QCheckBox *chkboxValue = new QCheckBox(currentSetting);
-  QPushButton *actionButton = new QPushButton(currentSetting);
-  //arv_dom_get_node_name(node);
-  QString nodeType(arv_dom_node_get_node_name(ARV_DOM_NODE(node)));
-  std::cout << "NodeType is:" << nodeType.toLocal8Bit().constData() << std::endl;
-  if(nodeType == "Category")
-    {
-      std::cout << "is category" << std::endl;
-      //Unhandled
-    } 
-  else if(nodeType == "Enumeration")
-    {
-      const GSList *childs;
-      const GSList *iter;
-      QString selectedEnumNode = arv_gc_enumeration_get_string_value(ARV_GC_ENUMERATION (node), NULL);
-      QString nodeName(arv_gc_feature_node_get_name(ARV_GC_FEATURE_NODE (node)));
-      comboValue->setProperty("nodeName", nodeName);
-      comboValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
-      comboValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
-      //value->setProperty("nodeItem", *item);
-      childs = arv_gc_enumeration_get_entries (ARV_GC_ENUMERATION (node));
-      int selectedIndex = 0;
-      int currentIndex = 0;
-      for (iter = childs; iter != NULL; iter = iter->next) 
-	{
-	  if (arv_gc_feature_node_is_implemented ((ArvGcFeatureNode*)iter->data, NULL)) 
+  #ifndef EMULATE_CAMERA
+    QLayoutItem *child;
+    while ((child = currentSettingLayout->takeAt(0)) != 0) {
+	child->widget()->disconnect();
+	delete child->widget();
+	delete child;
+    }
+    currentSetting->update();
+    ArvGcNode *node;
+    node = arv_gc_get_node (genicam, item->text(0).toLocal8Bit().constData());
+    const char *description;
+    description = arv_gc_feature_node_get_description (ARV_GC_FEATURE_NODE (node), NULL);
+    QLabel * descriptionLabel = new QLabel(currentSetting);
+    descriptionLabel->setText(description);
+    descriptionLabel->setWordWrap(true);
+    
+    QLabel * text = new QLabel(currentSetting);
+    QLineEdit * codeSnippet = new QLineEdit(currentSetting);
+    codeSnippet->setReadOnly(true);
+    text->setText(item->text(0));
+    currentSettingLayout->addWidget(text, 1,1);
+    currentSettingLayout->addWidget(descriptionLabel, 3,1);
+    QComboBox *comboValue = new QComboBox(currentSetting);
+    QSlider * sliderValue = new QSlider(currentSetting);
+    QCheckBox *chkboxValue = new QCheckBox(currentSetting);
+    QPushButton *actionButton = new QPushButton(currentSetting);
+    //arv_dom_get_node_name(node);
+    QString nodeType(arv_dom_node_get_node_name(ARV_DOM_NODE(node)));
+    std::cout << "NodeType is:" << nodeType.toLocal8Bit().constData() << std::endl;
+    if(nodeType == "Category")
+      {
+	std::cout << "is category" << std::endl;
+	//Unhandled
+      } 
+    else if(nodeType == "Enumeration")
+      {
+	const GSList *childs;
+	const GSList *iter;
+	QString selectedEnumNode = arv_gc_enumeration_get_string_value(ARV_GC_ENUMERATION (node), NULL);
+	QString nodeName(arv_gc_feature_node_get_name(ARV_GC_FEATURE_NODE (node)));
+	comboValue->setProperty("nodeName", nodeName);
+	comboValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
+	comboValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
+	//value->setProperty("nodeItem", *item);
+	childs = arv_gc_enumeration_get_entries (ARV_GC_ENUMERATION (node));
+	int selectedIndex = 0;
+	int currentIndex = 0;
+	for (iter = childs; iter != NULL; iter = iter->next) 
 	  {
-	    if(arv_gc_feature_node_is_available ((ArvGcFeatureNode*)iter->data, NULL))
+	    if (arv_gc_feature_node_is_implemented ((ArvGcFeatureNode*)iter->data, NULL)) 
 	    {
-	      QString enumNode = arv_gc_feature_node_get_name((ArvGcFeatureNode*)iter->data);
-	      comboValue->addItem(enumNode);
-	      if(enumNode.compare(selectedEnumNode)==0)
+	      if(arv_gc_feature_node_is_available ((ArvGcFeatureNode*)iter->data, NULL))
 	      {
-		selectedIndex = currentIndex;
+		QString enumNode = arv_gc_feature_node_get_name((ArvGcFeatureNode*)iter->data);
+		comboValue->addItem(enumNode);
+		if(enumNode.compare(selectedEnumNode)==0)
+		{
+		  selectedIndex = currentIndex;
+		}
+		currentIndex++;
 	      }
-	      currentIndex++;
 	    }
 	  }
+	codeSnippet->setText(QString("QTGIGE::writeEnum(\"") + nodeName + QString("\", \"") + comboValue->itemText(selectedIndex) + QString("\");"));
+	comboValue->setCurrentIndex(selectedIndex);
+	currentSettingLayout->addWidget(codeSnippet, 4,1);
+	currentSettingLayout->addWidget(comboValue,2,1);
+      }
+    else if(nodeType == "Command")
+      {
+	actionButton->setProperty("nodeItem", QVariant::fromValue((void*)item));
+	actionButton->setText(item->text(0));
+	currentSettingLayout->addWidget(actionButton,2,1);
+	currentSettingLayout->addWidget(codeSnippet, 4,1);
+	codeSnippet->setText(QString("QTGIGE::emitAction(\"") + item->text(0) + QString("\");"));
+	connect(actionButton, SIGNAL(clicked(bool)), this, SLOT(emitActionFromSettings()));
+      //unhandled 
+      }
+    else if(nodeType == "StringReg")
+      {
+	//unhandled
+      }
+    else if(nodeType == "Float")
+      {
+	//Aravis Seems to give invalid values for floats...
+	GError *err=NULL;
+	double val = arv_gc_float_get_value(ARV_GC_FLOAT(node), &err);
+	if (err != NULL)
+	{
+	  /* Report error to user, and free error */
+	  std::cerr << "Error in getting float value:" << err->message << std::endl;
+	  g_error_free (err);
 	}
-      codeSnippet->setText(QString("QTGIGE::writeEnum(\"") + nodeName + QString("\", \"") + comboValue->itemText(selectedIndex) + QString("\");"));
-      comboValue->setCurrentIndex(selectedIndex);
-      currentSettingLayout->addWidget(codeSnippet, 4,1);
-      currentSettingLayout->addWidget(comboValue,2,1);
-    }
-  else if(nodeType == "Command")
-    {
-      actionButton->setProperty("nodeItem", QVariant::fromValue((void*)item));
-      actionButton->setText(item->text(0));
-      currentSettingLayout->addWidget(actionButton,2,1);
-      currentSettingLayout->addWidget(codeSnippet, 4,1);
-      codeSnippet->setText(QString("QTGIGE::emitAction(\"") + item->text(0) + QString("\");"));
-      connect(actionButton, SIGNAL(clicked(bool)), this, SLOT(emitActionFromSettings()));
-     //unhandled 
-    }
-  else if(nodeType == "StringReg")
-    {
-      //unhandled
-    }
-  else if(nodeType == "Float")
-    {
-      //Aravis Seems to give invalid values for floats...
-      GError *err=NULL;
-      double val = arv_gc_float_get_value(ARV_GC_FLOAT(node), &err);
-      if (err != NULL)
+	err = NULL;
+	QString unit(arv_gc_float_get_unit(ARV_GC_FLOAT(node), &err));
+	if (err != NULL)
+	{
+	  /* Report error to user, and free error */
+	  std::cerr << "Error in getting float unit:" << err->message << std::endl;
+	  g_error_free (err);
+	}
+	err = NULL;
+	double minVal = arv_gc_float_get_min(ARV_GC_FLOAT(node), &err);
+	if (err != NULL)
+	{
+	  /* Report error to user, and free error */
+	  std::cerr << "Error in getting float minimum:" << err->message << std::endl;
+	  g_error_free (err);
+	}
+	err = NULL;
+	double maxVal = arv_gc_float_get_max(ARV_GC_FLOAT(node), &err);
+	if (err != NULL)
+	{
+	  /* Report error to user, and free error */
+	  std::cerr << "Error in getting float maximum:" << err->message << std::endl;
+	  g_error_free (err);
+	}
+	err = NULL;
+	double incr = arv_gc_float_get_inc(ARV_GC_FLOAT(node), &err);
+	if (err != NULL)
+	{
+	  /* Report error to user, and free error */
+	  std::cerr << "Error in getting float increment:" << err->message << std::endl;
+	  g_error_free (err);
+	}
+	err = NULL;
+	double mul = 1.0f/incr;
+	std::cout << "min:" << minVal << " max:" << maxVal << " val:" << val << " incr:" << incr << " mul:" << mul << std::endl;
+	sliderValue->setMinimum(minVal*mul);
+	sliderValue->setMaximum(maxVal*mul);
+	sliderValue->setTickInterval(incr*mul);
+	sliderValue->setValue(val*mul);
+	sliderValue->setProperty("multiplier", mul);
+	sliderValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
+	sliderValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
+	currentSettingLayout->addWidget(sliderValue,2,1);
+	connect(sliderValue, SIGNAL(valueChanged(int)), this, SLOT(writeFloatFromSettings(int)));
+      } 
+    else if(nodeType == "Boolean")
       {
-	/* Report error to user, and free error */
-	std::cerr << "Error in getting float value:" << err->message << std::endl;
-	g_error_free (err);
+	bool val = arv_gc_boolean_get_value(ARV_GC_BOOLEAN(node), NULL);
+	if(val)
+	  chkboxValue->setCheckState(Qt::Checked);
+	else
+	  chkboxValue->setCheckState(Qt::Unchecked);
+	chkboxValue->setText(item->text(0));
+	chkboxValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
+	chkboxValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
+	currentSettingLayout->addWidget(chkboxValue,2,1);
+	currentSettingLayout->addWidget(codeSnippet, 4,1);
+	if(val)
+	  codeSnippet->setText(QString("QTGIGE::writeBool(\"") + item->text(0) + QString("\", true);"));
+	else
+	  codeSnippet->setText(QString("QTGIGE::writeBool(\"") + item->text(0) + QString("\", false);"));
+	connect(chkboxValue, SIGNAL(stateChanged(int)), this, SLOT(writeBoolFromSettings(int)));
       }
-      err = NULL;
-      QString unit(arv_gc_float_get_unit(ARV_GC_FLOAT(node), &err));
-      if (err != NULL)
+    else if(nodeType == "Integer")
       {
-	/* Report error to user, and free error */
-	std::cerr << "Error in getting float unit:" << err->message << std::endl;
-	g_error_free (err);
+	int incr  = arv_gc_integer_get_inc(ARV_GC_INTEGER(node), NULL);
+	int val  = arv_gc_integer_get_value(ARV_GC_INTEGER(node), NULL);
+	int minVal  = arv_gc_integer_get_min(ARV_GC_INTEGER(node), NULL);
+	int maxVal  = arv_gc_integer_get_max(ARV_GC_INTEGER(node), NULL);
+	QString unit(arv_gc_integer_get_unit(ARV_GC_INTEGER(node), NULL));
+	std::cout << "min:" << minVal << " max:" << maxVal << " val:" << val << " incr:" << incr << " mul:" << 1 << std::endl;
+	sliderValue->setMinimum(minVal);
+	sliderValue->setMaximum(maxVal);
+	sliderValue->setTickInterval(incr);
+	sliderValue->setValue(val);
+	sliderValue->setProperty("multiplier", 1);
+	sliderValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
+	sliderValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
+	sliderValue->setOrientation(Qt::Horizontal);
+	currentSettingLayout->addWidget(sliderValue,2,1);
+	currentSettingLayout->addWidget(codeSnippet, 4,1);
+	codeSnippet->setText(QString("QTGIGE::writeInt(\"") + item->text(0) + QString("\", ") + QString::number(val) + QString(");"));
+	connect(sliderValue, SIGNAL(valueChanged(int)), this, SLOT(writeIntFromSettings(int)));
       }
-      err = NULL;
-      double minVal = arv_gc_float_get_min(ARV_GC_FLOAT(node), &err);
-      if (err != NULL)
-      {
-	/* Report error to user, and free error */
-	std::cerr << "Error in getting float minimum:" << err->message << std::endl;
-	g_error_free (err);
-      }
-      err = NULL;
-      double maxVal = arv_gc_float_get_max(ARV_GC_FLOAT(node), &err);
-      if (err != NULL)
-      {
-	/* Report error to user, and free error */
-	std::cerr << "Error in getting float maximum:" << err->message << std::endl;
-	g_error_free (err);
-      }
-      err = NULL;
-      double incr = arv_gc_float_get_inc(ARV_GC_FLOAT(node), &err);
-      if (err != NULL)
-      {
-	/* Report error to user, and free error */
-	std::cerr << "Error in getting float increment:" << err->message << std::endl;
-	g_error_free (err);
-      }
-      err = NULL;
-      double mul = 1.0f/incr;
-      std::cout << "min:" << minVal << " max:" << maxVal << " val:" << val << " incr:" << incr << " mul:" << mul << std::endl;
-      sliderValue->setMinimum(minVal*mul);
-      sliderValue->setMaximum(maxVal*mul);
-      sliderValue->setTickInterval(incr*mul);
-      sliderValue->setValue(val*mul);
-      sliderValue->setProperty("multiplier", mul);
-      sliderValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
-      sliderValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
-      currentSettingLayout->addWidget(sliderValue,2,1);
-      connect(sliderValue, SIGNAL(valueChanged(int)), this, SLOT(writeFloatFromSettings(int)));
-    } 
-  else if(nodeType == "Boolean")
-    {
-      bool val = arv_gc_boolean_get_value(ARV_GC_BOOLEAN(node), NULL);
-      if(val)
-	chkboxValue->setCheckState(Qt::Checked);
-      else
-	chkboxValue->setCheckState(Qt::Unchecked);
-      chkboxValue->setText(item->text(0));
-      chkboxValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
-      chkboxValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
-      currentSettingLayout->addWidget(chkboxValue,2,1);
-      currentSettingLayout->addWidget(codeSnippet, 4,1);
-      if(val)
-	codeSnippet->setText(QString("QTGIGE::writeBool(\"") + item->text(0) + QString("\", true);"));
-      else
-	codeSnippet->setText(QString("QTGIGE::writeBool(\"") + item->text(0) + QString("\", false);"));
-      connect(chkboxValue, SIGNAL(stateChanged(int)), this, SLOT(writeBoolFromSettings(int)));
-    }
-  else if(nodeType == "Integer")
-    {
-      int incr  = arv_gc_integer_get_inc(ARV_GC_INTEGER(node), NULL);
-      int val  = arv_gc_integer_get_value(ARV_GC_INTEGER(node), NULL);
-      int minVal  = arv_gc_integer_get_min(ARV_GC_INTEGER(node), NULL);
-      int maxVal  = arv_gc_integer_get_max(ARV_GC_INTEGER(node), NULL);
-      QString unit(arv_gc_integer_get_unit(ARV_GC_INTEGER(node), NULL));
-      std::cout << "min:" << minVal << " max:" << maxVal << " val:" << val << " incr:" << incr << " mul:" << 1 << std::endl;
-      sliderValue->setMinimum(minVal);
-      sliderValue->setMaximum(maxVal);
-      sliderValue->setTickInterval(incr);
-      sliderValue->setValue(val);
-      sliderValue->setProperty("multiplier", 1);
-      sliderValue->setProperty("codeSnippet", QVariant::fromValue((void*)codeSnippet));
-      sliderValue->setProperty("nodeItem", QVariant::fromValue((void*)item));
-      sliderValue->setOrientation(Qt::Horizontal);
-      currentSettingLayout->addWidget(sliderValue,2,1);
-      currentSettingLayout->addWidget(codeSnippet, 4,1);
-      codeSnippet->setText(QString("QTGIGE::writeInt(\"") + item->text(0) + QString("\", ") + QString::number(val) + QString(");"));
-      connect(sliderValue, SIGNAL(valueChanged(int)), this, SLOT(writeIntFromSettings(int)));
-    }
-  //else unhandled
-  currentSetting->setVisible(true);
-  settings->adjustSize();
-  currentSetting->setMinimumWidth(400);
-  connect(comboValue, SIGNAL(currentIndexChanged(QString)), this, SLOT(writeEnumFromSettingsSelectorMapper(QString)));
+    //else unhandled
+    currentSetting->setVisible(true);
+    settings->adjustSize();
+    currentSetting->setMinimumWidth(400);
+    connect(comboValue, SIGNAL(currentIndexChanged(QString)), this, SLOT(writeEnumFromSettingsSelectorMapper(QString)));
+#endif //#ifndef EMULATE_CAMERA
 }
 
 void QTGIGE::writeInt(QString nodeName, int value)
 {
   std::cout << "Received request to set " << nodeName.toLocal8Bit().constData() << " to " << value << std::endl;
+#ifndef EMULATE_CAMERA
   ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
   arv_gc_integer_set_value(ARV_GC_INTEGER(node), value, NULL);
+#endif
 }
 
 void QTGIGE::writeBool(QString nodeName, bool value)
 {
   std::cout << "Received request to set " << nodeName.toLocal8Bit().constData() << " to " << value << std::endl;
+#ifndef EMULATE_CAMERA
   ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
   arv_gc_boolean_set_value(ARV_GC_BOOLEAN(node), value, NULL);
+#endif
 }
 
 void QTGIGE::emitAction(QString nodeName)
 {
   std::cout << "Received request to action " << nodeName.toLocal8Bit().constData() << std::endl;
+#ifndef EMULATE_CAMERA
   ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
   arv_gc_command_execute(ARV_GC_COMMAND(node),NULL);
+#endif
 }
 
 void QTGIGE::emitActionFromSettings(void )
@@ -345,8 +369,10 @@ void QTGIGE::writeIntFromSettings(int value)
 void QTGIGE::writeFloat(QString nodeName, float value)
 {
   std::cout << "Received request to set " << nodeName.toLocal8Bit().constData() << " to " << value << std::endl;
+#ifndef EMULATE_CAMERA
   ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
   arv_gc_float_set_value(ARV_GC_FLOAT(node), value, NULL);
+#endif
 }
 
 void QTGIGE::writeFloatFromSettings(int value)
@@ -374,11 +400,13 @@ void QTGIGE::writeEnumFromSettingsSelectorMapper(QString value)
 void QTGIGE::writeEnum(QString nodeName, QString value)
 {
   std::cout << "Received request to set " << nodeName.toLocal8Bit().constData() << " to " << value.toLocal8Bit().constData() << std::endl;
+#ifndef EMULATE_CAMERA
   ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
   arv_gc_enumeration_set_string_value(ARV_GC_ENUMERATION(node), value.toLocal8Bit().constData(), NULL);
+#endif
 }
 
-
+#ifndef EMULATE_CAMERA
 void QTGIGE::gigE_list_features(ArvGc* genicam, const char* feature, gboolean show_description, QTreeWidgetItem * parent)
 {
 	ArvGcNode *node;
@@ -452,23 +480,30 @@ void QTGIGE::gigE_list_features(ArvGc* genicam, const char* feature, gboolean sh
 		}
 	}
 }
-
+#endif //#ifndef EMULATE_CAMERA
 
 int QTGIGE::setROI(int x, int y, int width, int height)
 {
+#ifndef EMULATE_CAMERA
   arv_camera_set_region (camera, x, y, width, height);
+#endif
 }
 
 int QTGIGE::setExposure(float period)
 {
+#ifndef EMULATE_CAMERA
   arv_camera_set_exposure_time (camera, period);
+#endif
 }
 
 int QTGIGE::setGain(float gain)
 {
+#ifndef EMULATE_CAMERA
   arv_camera_set_gain (camera, gain);
+#endif
 }
 
+#ifndef EMULATE_CAMERA
 void QTGIGE::unpack12BitPacked(const ArvBuffer* img, char* unpacked16)
 {
   unsigned char * img_ = (unsigned char*)(img->data);
@@ -484,6 +519,7 @@ void QTGIGE::unpack12BitPacked(const ArvBuffer* img, char* unpacked16)
     *out++ = (b1 && 0xf0) + (b2<<8);
   }
 }
+#endif //#ifndef EMULATE_CAMERA
 
 void QTGIGE::convert16to8bit(cv::InputArray in, cv::OutputArray out)
 {
@@ -498,7 +534,7 @@ void QTGIGE::convert16to8bit(cv::InputArray in, cv::OutputArray out)
   tmp_out.copyTo(out);
 }
 
-
+#ifndef EMULATE_CAMERA
 void QTGIGE::newImageCallbackWrapper(void* user_data, ArvStreamCallbackType type, ArvBuffer* buffer)
 {
   //Please note that this is in fact a static method, where we pass the instance as a user_data parameter,
@@ -506,14 +542,16 @@ void QTGIGE::newImageCallbackWrapper(void* user_data, ArvStreamCallbackType type
   QTGIGE * This = (QTGIGE*)user_data;
   This->newImageCallback(type, buffer);
 }
+#endif //#ifndef EMULATE_CAMERA
 
 
 int QTGIGE::startAquisition(void )
 {
+#ifndef EMULATE_CAMERA
   static unsigned int arv_option_packet_timeout = 40;
   static unsigned int arv_option_frame_retention = 200;
   static gboolean arv_option_auto_socket_buffer = FALSE;
-static gboolean arv_option_no_packet_resend = TRUE;
+  static gboolean arv_option_no_packet_resend = TRUE;
   arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_BAYER_GR_12_PACKED);
   gint payload;
   payload = arv_camera_get_payload (camera);
@@ -539,18 +577,20 @@ static gboolean arv_option_no_packet_resend = TRUE;
       arv_camera_set_acquisition_mode (camera, ARV_ACQUISITION_MODE_CONTINUOUS);
       arv_camera_start_acquisition (camera);
     }
-}
+  }
+#endif //#ifndef EMULATE_CAMERA
 }
 
+#ifndef EMULATE_CAMERA
 void QTGIGE::newImageCallback(ArvStreamCallbackType type, ArvBuffer* buffer)
 {
-
   if(type == ARV_STREAM_CALLBACK_TYPE_BUFFER_DONE)
   {
     this->bufferQue.enqueue(buffer);
     this->bufferSem.release(1);
   }
 }
+#endif //#ifndef EMULATE_CAMERA
 
 int QTGIGE::stopAquisition(void )
 {
@@ -565,6 +605,16 @@ void QTGIGE::run()
   nFrames = 0;  
   successFrames = 0;
   failedFrames = 0;
+  
+  #ifdef EMULATE_CAMERA
+  cv::Mat emu_image;
+  std::cout << "Using " << EMULATION_INPUT_FILE << " as input file for emulation" << std::endl;
+  emu_image = cv::imread(EMULATION_INPUT_FILE, CV_LOAD_IMAGE_GRAYSCALE);
+  cv::transpose(emu_image, emu_image);
+  std::cout << "Emulation image size " << emu_image.size().width << "x" << emu_image.size().height << "x" << emu_image.channels() << std::endl;
+  unsigned int length = emu_image.size().height;
+  #endif
+  
   framePeriod.start();
   while(abort==false)
   {
@@ -587,6 +637,7 @@ void QTGIGE::run()
       setitimer(ITIMER_PROF, &ptimer, NULL);
       updateptimer = false;
     }
+#ifndef EMULATE_CAMERA
     bool cont = false;
     while(cont==false)
     {
@@ -722,5 +773,19 @@ void QTGIGE::run()
 //       }     
     }
    arv_stream_push_buffer (stream, buffer);   
+#else //#ifndef EMULATE_CAMERA
+   //Send out next emulated frame
+   roi_cpos -= roi_height/10;
+   if(roi_cpos-roi_height<0)
+     roi_cpos = length;
+   cv::Mat subImg = emu_image(cv::Range(roi_cpos-roi_height, roi_cpos), cv::Range(roi_x, roi_x+roi_width));
+//   cv::Mat subImg16;
+//   convert8to16bit(subImg, subImg16);
+  cv::Mat RGB161616(roi_height,roi_width, cv::DataType<uint16_t>::type);
+  subImg.convertTo(RGB161616, RGB161616.type(), 256.0);
+//  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
+   emit(this->newBayerGRImage(RGB161616));
+   this->msleep(300);
+#endif //#ifndef EMULATE_CAMERA
   }
 }

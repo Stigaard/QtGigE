@@ -2,8 +2,12 @@
 // Use of this source code is governed by the MIT license (see license.txt).
 #ifndef QTGIGE_H
 #define QTGIGE_H
-#include <arvtypes.h>
-#include <arvstream.h>
+#ifdef EMULATE_CAMERA
+  #define EMULATION_INPUT_FILE "/media/slow-storage/Dropbox/Ph.D./2013-01-23-VisionSpray/simulation_image/maizeAnd3weedsCombinedImage.png"
+#else
+  #include <arvtypes.h>
+  #include <arvstream.h>
+#endif
 #include <QObject>
 #include <QMutex>
 #include <QQueue>
@@ -11,6 +15,7 @@
 #include <QElapsedTimer>
 #include <QTreeWidgetItem>
 #include <QGridLayout>
+#include <QDialog>
 
 #include <time.h>
 #include <sys/time.h>
@@ -26,11 +31,13 @@
     int setROI(int x, int y, int width, int height);
     int setExposure(float period); //Exposure time in µs
     int setGain(float gain); //Unit currently unknown (have to look it up from datasheet)
+#ifndef EMULATE_CAMERA
     void newImageCallback(ArvStreamCallbackType type, ArvBuffer* buffer);
     static void newImageCallbackWrapper(void *user_data, ArvStreamCallbackType type, ArvBuffer *buffer);
+    void unpack12BitPacked(const ArvBuffer* img, char* unpacked16);
+#endif
     int startAquisition(void);
     int stopAquisition(void);
-    void unpack12BitPacked(const ArvBuffer* img, char* unpacked16);
     void setptimer(itimerval timer);
     void PrintParms(void);
     static void convert16to8bit(cv::InputArray in, cv::OutputArray out);
@@ -48,11 +55,21 @@
     void emitAction(QString nodeName);
   private:
       void run();
+#ifndef EMULATE_CAMERA
       ArvCamera * camera;
       ArvStream* stream;
       ArvDevice * dev;
       ArvGc *genicam;
       QQueue<ArvBuffer*> bufferQue;
+#endif
+#ifdef EMULATE_CAMERA
+      int roi_cpos;
+#endif
+      int roi_width;
+      int roi_height;
+      int roi_x;
+      int roi_y;
+      double roi_scale;
       QSemaphore bufferSem;
       itimerval ptimer;
       bool updateptimer;
@@ -62,7 +79,9 @@
       int nFrames;
       int successFrames;
       int failedFrames;
+#ifndef EMULATE_CAMERA
       void gigE_list_features(ArvGc* genicam, const char* feature, gboolean show_description, QTreeWidgetItem* parent);
+#endif
       QDialog *settings;
       QWidget * currentSetting;
       QTreeWidget *treeWidget;
