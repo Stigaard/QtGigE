@@ -784,7 +784,26 @@ void QTGIGE::run()
 //   convert8to16bit(subImg, subImg16);
   cv::Mat RGB161616(roi_height,roi_width, cv::DataType<uint16_t>::type);
   subImg.convertTo(RGB161616, RGB161616.type(), 256.0);
-//  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
+  //Set red and blue in bayer pattern = 0
+  uint16_t h = RGB161616.size().height;
+  uint16_t w = RGB161616.size().width;
+  uint16_t* ptr = (uint16_t*)RGB161616.ptr();
+  for(uint16_t y = 0; y < h; y+=2)
+  {
+    for(uint16_t x = 1; x < w; x+=2)
+    {
+      ptr[y*w+x] = 0;
+    }
+  }
+  for(uint16_t y = 1; y < h; y+=2)
+  {
+    for(uint16_t x = 0; x < w; x+=2)
+    {
+      ptr[y*w+x] = 0;
+    }
+  }
+  //  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
+  //cv::imwrite("test.png", RGB161616);
    emit(this->newBayerGRImage(RGB161616));
    this->msleep(300);
 #endif //#ifndef EMULATE_CAMERA
