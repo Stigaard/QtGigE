@@ -42,8 +42,7 @@
     void PrintParms(void);
     static void convert16to8bit(cv::InputArray in, cv::OutputArray out);
   signals:
-    void newBayerBGImage(const cv::Mat img);
-    void newBayerGRImage(const cv::Mat img);
+    void newBayerGRImage(const cv::Mat img, qint64 timestampus);
     void measuredFPS(float fps);
     void measuredFrameStats(int success, int failed);
   public slots:
@@ -61,6 +60,7 @@
       ArvDevice * dev;
       ArvGc *genicam;
       QQueue<ArvBuffer*> bufferQue;
+      qint64 offset;
 #endif
 #ifdef EMULATE_CAMERA
       int roi_cpos;

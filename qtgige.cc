@@ -16,6 +16,7 @@
 #include <QSlider>
 #include <QPushButton>
 #include <qcheckbox.h>
+#include <QDateTime>
 #include <cstdio>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -587,6 +588,12 @@ void QTGIGE::newImageCallback(ArvStreamCallbackType type, ArvBuffer* buffer)
 {
   if(type == ARV_STREAM_CALLBACK_TYPE_BUFFER_DONE)
   {
+    //Calibrate clk offset
+    if(offset<0)
+    {
+      qint64 now = QDateTime::currentMSecsSinceEpoch();
+      offset = now - ((qint64)(buffer->timestamp_ns/1000000));
+    }
     this->bufferQue.enqueue(buffer);
     this->bufferSem.release(1);
   }
@@ -607,14 +614,16 @@ void QTGIGE::run()
   successFrames = 0;
   failedFrames = 0;
   
-  #ifdef EMULATE_CAMERA
+#ifndef EMULATE_CAMERA
+  offset = -1;
+#else
   cv::Mat emu_image;
   std::cout << "Using " << EMULATION_INPUT_FILE << " as input file for emulation" << std::endl;
-  emu_image = cv::imread(EMULATION_INPUT_FILE, CV_LOAD_IMAGE_GRAYSCALE);
+  emu_image = cv::imread(EMULATION_INPUT_FILE, cv::IMREAD_GRAYSCALE);
   cv::transpose(emu_image, emu_image);
   std::cout << "Emulation image size " << emu_image.size().width << "x" << emu_image.size().height << "x" << emu_image.channels() << std::endl;
   unsigned int length = emu_image.size().height;
-  #endif
+#endif
   
   framePeriod.start();
   while(abort==false)
@@ -683,14 +692,8 @@ void QTGIGE::run()
 	case ARV_PIXEL_FORMAT_BAYER_RG_12:
 	case ARV_PIXEL_FORMAT_BAYER_GB_12:
 	case ARV_PIXEL_FORMAT_BAYER_BG_12:
-	  std::cout << "Not yet implemented bayer" << std::endl;
-	  break;
 	case ARV_PIXEL_FORMAT_BAYER_BG_12_PACKED:
-	  {
-	    cv::Mat unpacked;
-//	    this->unpack12BitPacked(buffer, unpacked);
-	    emit(this->newBayerBGImage(unpacked));
-	  }
+	  std::cout << "Not yet implemented bayer" << std::endl;
 	  break;
 	case ARV_PIXEL_FORMAT_BAYER_GR_12_PACKED: 
 	{	
@@ -698,7 +701,8 @@ void QTGIGE::run()
 	    {
 	      this->unpack12BitPacked(buffer, tmp);
 	      cv::Mat unpacked(buffer->height, buffer->width, cv::DataType<uint16_t>::type, (void*)tmp);
-	      emit(this->newBayerGRImage(unpacked));	
+	      qint64 timestamp_in_us = (buffer->timestamp_ns)/1000 + (offset*1000);
+	      emit(this->newBayerGRImage(unpacked, timestamp_in_us));	
 	    }
 	}
 	break;
@@ -804,7 +808,7 @@ void QTGIGE::run()
   }
   //  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
   //cv::imwrite("test.png", RGB161616);
-   emit(this->newBayerGRImage(RGB161616));
+   emit(this->newBayerGRImage(RGB161616, QDateTime::currentMSecsSinceEpoch()*1000));
    this->msleep(300);
 #endif //#ifndef EMULATE_CAMERA
   }
