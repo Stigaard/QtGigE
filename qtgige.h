@@ -88,6 +88,8 @@
       QGridLayout *settingsLayout;
       QGridLayout * currentSettingLayout;
       void drawSettingsDialog(void);
+      int64 getSensorHeight();
+      int64 getSensorWidth();
   private slots:
       void newSettingSelected(QTreeWidgetItem* item,int column);
       void writeEnumFromSettingsSelectorMapper(QString value);

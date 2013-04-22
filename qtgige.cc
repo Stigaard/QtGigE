@@ -484,10 +484,34 @@ void QTGIGE::gigE_list_features(ArvGc* genicam, const char* feature, gboolean sh
 }
 #endif //#ifndef EMULATE_CAMERA
 
+int64 QTGIGE::getSensorWidth()
+{
+    QString nodeName = "WidthMax";
+    ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
+    int64 sensorWidth = arv_gc_integer_get_value(ARV_GC_INTEGER(node), NULL);
+    return sensorWidth;
+}
+
+int64 QTGIGE::getSensorHeight()
+{
+    QString nodeName = "HeightMax";
+    ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
+    int64 sensorHeight = arv_gc_integer_get_value(ARV_GC_INTEGER(node), NULL);
+    return sensorHeight;
+}
+
 int QTGIGE::setROI(int x, int y, int width, int height)
 {
 #ifndef EMULATE_CAMERA
-  arv_camera_set_region (camera, x, y, width, height);
+    int64 sensorHeight = getSensorHeight();
+    int64 sensorWidth = getSensorWidth();
+    
+    assert(0 <= x);
+    assert(0 <= y);
+    assert(x + width <= sensorWidth);
+    assert(y + height <= sensorHeight);
+    
+    arv_camera_set_region (camera, x, y, width, height);
 #endif
 }
 
