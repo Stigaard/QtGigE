@@ -808,7 +808,8 @@ void QTGIGE::run()
   }
   //  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
   //cv::imwrite("test.png", RGB161616);
-   emit(this->newBayerGRImage(RGB161616, QDateTime::currentMSecsSinceEpoch()*1000));
+   //emit(this->newBayerGRImage(RGB161616, QDateTime::currentMSecsSinceEpoch()*1000));
+   emit(this->newBayerGRImage(RGB161616, roi_cpos));
    this->msleep(300);
 #endif //#ifndef EMULATE_CAMERA
   }
