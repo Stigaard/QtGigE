@@ -656,7 +656,11 @@ void QTGIGE::run()
 #else
   cv::Mat emu_image;
   std::cout << "Using " << EMULATION_INPUT_FILE << " as input file for emulation" << std::endl;
+  #ifdef CV_LOAD_IMAGE_GRAYSCALE
+  emu_image = cv::imread(EMULATION_INPUT_FILE, CV_LOAD_IMAGE_GRAYSCALE);
+  #else
   emu_image = cv::imread(EMULATION_INPUT_FILE, cv::IMREAD_GRAYSCALE);
+  #endif
   cv::transpose(emu_image, emu_image);
   std::cout << "Emulation image size " << emu_image.size().width << "x" << emu_image.size().height << "x" << emu_image.channels() << std::endl;
   unsigned int length = emu_image.size().height;
