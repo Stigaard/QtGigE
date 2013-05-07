@@ -29,6 +29,8 @@
   #include <arv.h>
 #endif
 
+#define CV_LOAD_IMAGE_GRAYSCALE_IS_DEFINED
+
 QTGIGE::QTGIGE(char* deviceId)
 {
 #ifndef EMULATE_CAMERA
@@ -656,7 +658,7 @@ void QTGIGE::run()
 #else
   cv::Mat emu_image;
   std::cout << "Using " << EMULATION_INPUT_FILE << " as input file for emulation" << std::endl;
-  #ifdef CV_LOAD_IMAGE_GRAYSCALE
+  #ifdef CV_LOAD_IMAGE_GRAYSCALE_IS_DEFINED
   emu_image = cv::imread(EMULATION_INPUT_FILE, CV_LOAD_IMAGE_GRAYSCALE);
   #else
   emu_image = cv::imread(EMULATION_INPUT_FILE, cv::IMREAD_GRAYSCALE);
