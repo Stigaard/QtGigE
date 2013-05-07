@@ -54,3 +54,4 @@ mem.log.*
 massif.*
 callgrind.*
 perf.data*
+CMakeLists.txt.user
