@@ -29,7 +29,7 @@
   #include <arv.h>
 #endif
 
-QTGIGE::QTGIGE(char* deviceId)
+QTGIGE::QTGIGE(const char* deviceId)
 {
 #ifndef EMULATE_CAMERA
   this->camera = arv_camera_new (deviceId);
