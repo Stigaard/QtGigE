@@ -29,10 +29,17 @@
   #include <arv.h>
 #endif
 
+#define CV_LOAD_IMAGE_GRAYSCALE_IS_DEFINED
+
 QTGIGE::QTGIGE(const char* deviceId)
 {
 #ifndef EMULATE_CAMERA
   this->camera = arv_camera_new (deviceId);
+  if(this->camera == 0x0)
+  {
+    std::cout << "Failed to open camera with device id \"" << deviceId << "\"" << std::endl;
+    assert(this->camera);
+  }
 #endif
   updateptimer = false;
 //   std::cout << "Vendor name:" << arv_camera_get_vendor_name (camera) << std::endl;
@@ -651,7 +658,11 @@ void QTGIGE::run()
 #else
   cv::Mat emu_image;
   std::cout << "Using " << EMULATION_INPUT_FILE << " as input file for emulation" << std::endl;
+  #ifdef CV_LOAD_IMAGE_GRAYSCALE_IS_DEFINED
+  emu_image = cv::imread(EMULATION_INPUT_FILE, CV_LOAD_IMAGE_GRAYSCALE);
+  #else
   emu_image = cv::imread(EMULATION_INPUT_FILE, cv::IMREAD_GRAYSCALE);
+  #endif
   cv::transpose(emu_image, emu_image);
   std::cout << "Emulation image size " << emu_image.size().width << "x" << emu_image.size().height << "x" << emu_image.channels() << std::endl;
   unsigned int length = emu_image.size().height;
