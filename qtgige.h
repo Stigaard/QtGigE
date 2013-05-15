@@ -27,7 +27,7 @@
   class QTGIGE : public QThread {
     Q_OBJECT
     public:
-    QTGIGE(char* deviceId);
+    QTGIGE(const char* deviceId);
     ~QTGIGE();
     int setROI(int x, int y, int width, int height);
     int setExposure(float period); //Exposure time in µs
@@ -43,8 +43,7 @@
     void PrintParms(void);
     static void convert16to8bit(cv::InputArray in, cv::OutputArray out);
   signals:
-    void newBayerBGImage(const cv::Mat img);
-    void newBayerGRImage(const cv::Mat img);
+    void newBayerGRImage(const cv::Mat img, qint64 timestampus);
     void measuredFPS(float fps);
     void measuredFrameStats(int success, int failed);
   public slots:
@@ -62,6 +61,7 @@
       ArvDevice * dev;
       ArvGc *genicam;
       QQueue<ArvBuffer*> bufferQue;
+      qint64 offset;
 #endif
 #ifdef EMULATE_CAMERA
       int roi_cpos;
@@ -89,6 +89,8 @@
       QGridLayout *settingsLayout;
       QGridLayout * currentSettingLayout;
       void drawSettingsDialog(void);
+      int64 getSensorHeight();
+      int64 getSensorWidth();
   private slots:
       void newSettingSelected(QTreeWidgetItem* item,int column);
       void writeEnumFromSettingsSelectorMapper(QString value);

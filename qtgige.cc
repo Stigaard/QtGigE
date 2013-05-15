@@ -16,6 +16,7 @@
 #include <QSlider>
 #include <QPushButton>
 #include <qcheckbox.h>
+#include <QDateTime>
 #include <cstdio>
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -28,10 +29,17 @@
   #include <arv.h>
 #endif
 
-QTGIGE::QTGIGE(char* deviceId)
+#define CV_LOAD_IMAGE_GRAYSCALE_IS_DEFINED
+
+QTGIGE::QTGIGE(const char* deviceId)
 {
 #ifndef EMULATE_CAMERA
   this->camera = arv_camera_new (deviceId);
+  if(this->camera == 0x0)
+  {
+    std::cout << "Failed to open camera with device id \"" << deviceId << "\"" << std::endl;
+    assert(this->camera);
+  }
 #endif
   updateptimer = false;
 //   std::cout << "Vendor name:" << arv_camera_get_vendor_name (camera) << std::endl;
@@ -483,10 +491,42 @@ void QTGIGE::gigE_list_features(ArvGc* genicam, const char* feature, gboolean sh
 }
 #endif //#ifndef EMULATE_CAMERA
 
+int64 QTGIGE::getSensorWidth()
+{
+    QString nodeName = "WidthMax";
+#ifndef EMULATE_CAMERA
+    ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
+    int64 sensorWidth = arv_gc_integer_get_value(ARV_GC_INTEGER(node), NULL);
+    return sensorWidth;
+#else
+    return -1;
+#endif
+}
+
+int64 QTGIGE::getSensorHeight()
+{
+    QString nodeName = "HeightMax";
+#ifndef EMULATE_CAMERA
+    ArvGcNode *node = arv_gc_get_node (genicam, nodeName.toLocal8Bit().constData());
+    int64 sensorHeight = arv_gc_integer_get_value(ARV_GC_INTEGER(node), NULL);
+    return sensorHeight;
+#else
+    return -1;
+#endif
+}
+
 int QTGIGE::setROI(int x, int y, int width, int height)
 {
 #ifndef EMULATE_CAMERA
-  arv_camera_set_region (camera, x, y, width, height);
+    int64 sensorHeight = getSensorHeight();
+    int64 sensorWidth = getSensorWidth();
+    
+    assert(0 <= x);
+    assert(0 <= y);
+    assert(x + width <= sensorWidth);
+    assert(y + height <= sensorHeight);
+    
+    arv_camera_set_region (camera, x, y, width, height);
 #endif
 }
 
@@ -587,6 +627,12 @@ void QTGIGE::newImageCallback(ArvStreamCallbackType type, ArvBuffer* buffer)
 {
   if(type == ARV_STREAM_CALLBACK_TYPE_BUFFER_DONE)
   {
+    //Calibrate clk offset
+    if(offset<0)
+    {
+      qint64 now = QDateTime::currentMSecsSinceEpoch();
+      offset = now - ((qint64)(buffer->timestamp_ns/1000000));
+    }
     this->bufferQue.enqueue(buffer);
     this->bufferSem.release(1);
   }
@@ -607,14 +653,20 @@ void QTGIGE::run()
   successFrames = 0;
   failedFrames = 0;
   
-  #ifdef EMULATE_CAMERA
+#ifndef EMULATE_CAMERA
+  offset = -1;
+#else
   cv::Mat emu_image;
   std::cout << "Using " << EMULATION_INPUT_FILE << " as input file for emulation" << std::endl;
+  #ifdef CV_LOAD_IMAGE_GRAYSCALE_IS_DEFINED
   emu_image = cv::imread(EMULATION_INPUT_FILE, CV_LOAD_IMAGE_GRAYSCALE);
+  #else
+  emu_image = cv::imread(EMULATION_INPUT_FILE, cv::IMREAD_GRAYSCALE);
+  #endif
   cv::transpose(emu_image, emu_image);
   std::cout << "Emulation image size " << emu_image.size().width << "x" << emu_image.size().height << "x" << emu_image.channels() << std::endl;
   unsigned int length = emu_image.size().height;
-  #endif
+#endif
   
   framePeriod.start();
   while(abort==false)
@@ -683,14 +735,8 @@ void QTGIGE::run()
 	case ARV_PIXEL_FORMAT_BAYER_RG_12:
 	case ARV_PIXEL_FORMAT_BAYER_GB_12:
 	case ARV_PIXEL_FORMAT_BAYER_BG_12:
-	  std::cout << "Not yet implemented bayer" << std::endl;
-	  break;
 	case ARV_PIXEL_FORMAT_BAYER_BG_12_PACKED:
-	  {
-	    cv::Mat unpacked;
-//	    this->unpack12BitPacked(buffer, unpacked);
-	    emit(this->newBayerBGImage(unpacked));
-	  }
+	  std::cout << "Not yet implemented bayer" << std::endl;
 	  break;
 	case ARV_PIXEL_FORMAT_BAYER_GR_12_PACKED: 
 	{	
@@ -698,7 +744,8 @@ void QTGIGE::run()
 	    {
 	      this->unpack12BitPacked(buffer, tmp);
 	      cv::Mat unpacked(buffer->height, buffer->width, cv::DataType<uint16_t>::type, (void*)tmp);
-	      emit(this->newBayerGRImage(unpacked));	
+	      qint64 timestamp_in_us = (buffer->timestamp_ns)/1000 + (offset*1000);
+	      emit(this->newBayerGRImage(unpacked, timestamp_in_us));	
 	    }
 	}
 	break;
@@ -784,8 +831,28 @@ void QTGIGE::run()
 //   convert8to16bit(subImg, subImg16);
   cv::Mat RGB161616(roi_height,roi_width, cv::DataType<uint16_t>::type);
   subImg.convertTo(RGB161616, RGB161616.type(), 256.0);
-//  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
-   emit(this->newBayerGRImage(RGB161616));
+  //Set red and blue in bayer pattern = 0
+  uint16_t h = RGB161616.size().height;
+  uint16_t w = RGB161616.size().width;
+  uint16_t* ptr = (uint16_t*)RGB161616.ptr();
+  for(uint16_t y = 0; y < h; y+=2)
+  {
+    for(uint16_t x = 1; x < w; x+=2)
+    {
+      ptr[y*w+x] = 0;
+    }
+  }
+  for(uint16_t y = 1; y < h; y+=2)
+  {
+    for(uint16_t x = 0; x < w; x+=2)
+    {
+      ptr[y*w+x] = 0;
+    }
+  }
+  //  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
+  //cv::imwrite("test.png", RGB161616);
+   //emit(this->newBayerGRImage(RGB161616, QDateTime::currentMSecsSinceEpoch()*1000));
+   emit(this->newBayerGRImage(RGB161616, roi_cpos));
    this->msleep(300);
 #endif //#ifndef EMULATE_CAMERA
   }
