@@ -52,10 +52,10 @@ QTGIGE::QTGIGE(const char* deviceId)
   dev = arv_camera_get_device(camera);
   genicam = arv_device_get_genicam(dev);
 #else
-  roi_width = 2046;
-  roi_height = 1086;
-  roi_x = 1587;
-  roi_y = 0;
+  roi_width = 546;
+  roi_height = 586;
+  roi_x = 581;
+  roi_y = 1;
   roi_scale = 1.0;
   roi_cpos = 0;
 #endif
@@ -839,14 +839,14 @@ void QTGIGE::run()
   {
     for(uint16_t x = 1; x < w; x+=2)
     {
-      ptr[y*w+x] = 0;
+//       ptr[y*w+x] = 0;
     }
   }
   for(uint16_t y = 1; y < h; y+=2)
   {
     for(uint16_t x = 0; x < w; x+=2)
     {
-      ptr[y*w+x] = 0;
+//       ptr[y*w+x] = 0;
     }
   }
   //  std::cout << "RGB161616 image size " << RGB161616.size().width << "x" << RGB161616.size().height << "x" << RGB161616.channels() << std::endl;
