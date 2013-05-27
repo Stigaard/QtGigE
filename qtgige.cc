@@ -34,12 +34,14 @@
 QTGIGE::QTGIGE(const char* deviceId)
 {
 #ifndef EMULATE_CAMERA
+  arv_g_type_init ();
   this->camera = arv_camera_new (deviceId);
   if(this->camera == 0x0)
   {
     std::cout << "Failed to open camera with device id \"" << deviceId << "\"" << std::endl;
     assert(this->camera);
   }
+    std::cout << "Opened camera with device id \"" << deviceId << "\"" << std::endl;  
 #endif
   updateptimer = false;
 //   std::cout << "Vendor name:" << arv_camera_get_vendor_name (camera) << std::endl;
