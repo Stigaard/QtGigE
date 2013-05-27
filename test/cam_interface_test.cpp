@@ -17,7 +17,7 @@ cam_interface_test::cam_interface_test()
     getitimer(ITIMER_PROF, &ptimer);
     qRegisterMetaType< cv::Mat >("cv::Mat");    
     std::cout << "CAM_interface_test TID:" << syscall(SYS_gettid) << std::endl << std::flush;
-    cam = new QTGIGE("21272795");
+    cam = new QTGIGE(NULL);
     cam->setptimer(ptimer);
     
     //this->cam->setROI(0,0,1000,1000);
