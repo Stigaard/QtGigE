@@ -42,10 +42,13 @@
     void setptimer(itimerval timer);
     void PrintParms(void);
     static void convert16to8bit(cv::InputArray in, cv::OutputArray out);
+    static void convert8to16bit(cv::InputArray in, cv::OutputArray out);
+    void loadCorrectionImage(const QString pathToLog);
   signals:
     void newBayerGRImage(const cv::Mat img, qint64 timestampus);
     void measuredFPS(float fps);
     void measuredFrameStats(int success, int failed);
+    void vignettingCorrectedInImage(const cv::Mat img, qint64 timestampus);
   public slots:
     void showCameraSettings(void);
     void writeEnum(QString nodeName, QString value);
@@ -53,6 +56,7 @@
     void writeInt(QString nodeName, int value);
     void writeBool(QString nodeName, bool value);
     void emitAction(QString nodeName);
+    void correctVignetting(cv::Mat img, qint64 timestampus);
   private:
       void run();
 #ifndef EMULATE_CAMERA
@@ -80,6 +84,7 @@
       int nFrames;
       int successFrames;
       int failedFrames;
+      cv::Mat correctionImage;
 #ifndef EMULATE_CAMERA
       void gigE_list_features(ArvGc* genicam, const char* feature, gboolean show_description, QTreeWidgetItem* parent);
 #endif

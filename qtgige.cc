@@ -577,6 +577,19 @@ void QTGIGE::convert16to8bit(cv::InputArray in, cv::OutputArray out)
   tmp_out.copyTo(out);
 }
 
+void QTGIGE::convert8to16bit(cv::InputArray in, cv::OutputArray out)
+{
+  uint8_t * in_ = (uint8_t*)in.getMat().ptr();
+  cv::Mat tmp_out(in.getMat().size().height, in.getMat().size().width, cv::DataType<uint16_t>::type);
+  uint16_t * out_ = (uint16_t*)tmp_out.ptr();
+  uint8_t * end = in_ + (in.getMat().size().height * in.getMat().size().width);
+  while(in_!=end)
+  {
+    *out_++ = (*in_++)<<8;
+  }
+  tmp_out.copyTo(out);
+}
+
 #ifndef EMULATE_CAMERA
 void QTGIGE::newImageCallbackWrapper(void* user_data, ArvStreamCallbackType type, ArvBuffer* buffer)
 {
@@ -858,4 +871,27 @@ void QTGIGE::run()
    this->msleep(300);
 #endif //#ifndef EMULATE_CAMERA
   }
+}
+
+void QTGIGE::loadCorrectionImage(const QString pathToLog)
+{
+  cv::Mat tempImage;
+  #ifdef CV_LOAD_IMAGE_GRAYSCALE_IS_DEFINED
+  tempImage = cv::imread(pathToLog.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+  #else
+  tempImage = cv::imread(pathToLog.toStdString(), cv::IMREAD_GRAYSCALE);
+  #endif
+  convert8to16bit(tempImage, correctionImage);
+}
+
+void QTGIGE::correctVignetting(cv::Mat img, qint64 timestampus)
+{
+//   std::cout << "img.cols: " << img.cols << " correctionImage.cols: " << correctionImage.cols << std::endl;
+//   std::cout << "img.rows: " << img.rows << " correctionImage.rows: " << correctionImage.rows << std::endl;
+  assert(img.cols == correctionImage.cols);
+  assert(img.rows == correctionImage.rows);
+  
+  cv::Mat resultImage = img.mul(correctionImage, 1 / 64000.);
+  emit(vignettingCorrectedInImage(resultImage, timestampus));
+  std::cout << "Emitted vignetting correcting image" << std::endl;
 }
