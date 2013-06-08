@@ -886,12 +886,12 @@ void QTGIGE::loadCorrectionImage(const QString pathToLog)
 
 void QTGIGE::correctVignetting(cv::Mat img, qint64 timestampus)
 {
-//   std::cout << "img.cols: " << img.cols << " correctionImage.cols: " << correctionImage.cols << std::endl;
-//   std::cout << "img.rows: " << img.rows << " correctionImage.rows: " << correctionImage.rows << std::endl;
+//  std::cout << "img.cols: " << img.cols << " correctionImage.cols: " << correctionImage.cols << std::endl;
+//  std::cout << "img.rows: " << img.rows << " correctionImage.rows: " << correctionImage.rows << std::endl;
   assert(img.cols == correctionImage.cols);
   assert(img.rows == correctionImage.rows);
   
   cv::Mat resultImage = img.mul(correctionImage, 1 / 64000.);
   emit(vignettingCorrectedInImage(resultImage, timestampus));
-  std::cout << "Emitted vignetting correcting image" << std::endl;
+//  std::cout << "Emitted vignetting correcting image" << std::endl;
 }
