@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 
+set(CMAKE_BUILD_TYPE Debug)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/CMAKE_Modules/")
 find_package(Qt4 REQUIRED QtXml QtGui QtCore)
