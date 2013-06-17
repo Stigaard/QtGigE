@@ -607,7 +607,7 @@ int QTGIGE::startAquisition(void )
   static unsigned int arv_option_packet_timeout = 40;
   static unsigned int arv_option_frame_retention = 200;
   static gboolean arv_option_auto_socket_buffer = FALSE;
-  static gboolean arv_option_no_packet_resend = TRUE;
+  static gboolean arv_option_no_packet_resend = FALSE;
   arv_camera_set_pixel_format(camera, ARV_PIXEL_FORMAT_BAYER_GR_12_PACKED);
   gint payload;
   payload = arv_camera_get_payload (camera);
@@ -868,7 +868,7 @@ void QTGIGE::run()
   //cv::imwrite("test.png", RGB161616);
    //emit(this->newBayerGRImage(RGB161616, QDateTime::currentMSecsSinceEpoch()*1000));
    emit(this->newBayerGRImage(RGB161616, roi_cpos));
-   this->msleep(300);
+   this->msleep(500);
 #endif //#ifndef EMULATE_CAMERA
   }
 }
